@@ -929,7 +929,7 @@ common.debug.level[5] && KONtx.cc.log("CaptionsOverlay", "onPlayerTimeIndexChang
 	// fired when this control is appended to the dom
     onAppended: function (event) {
         
-        this.onDeactivate.subscribeTo(this.getView(), "onHideView", this);
+        this.destroy.subscribeTo(this.getView(), "onHideView", this);
 		
     },
     // fired when the CC button is selected on the transport control
@@ -991,6 +991,20 @@ common.debug.level[1] && KONtx.cc.log("CaptionsOverlay", "onDeactivate");
 		
 		this.unbindControlStop();
 		
+    },
+    //
+    destroy: function () {
+common.debug.level[1] && KONtx.cc.log("CaptionsOverlay", "destroy");
+
+        // deactivate
+        this[KONtx.cc.useHardware ? "setHardwareState" : "setSoftwareState"](false);
+        this.unbindTimeIndexChange();
+        this.unbindStateChange();
+        this.unbindControlStop();
+
+        // encourage gc to free some memory
+        delete this.data.body;
+        delete this.data.head;
     },
     // this routine further normalizes the incoming data so we have a standard payload for the renderer to work with
     onDataReceived: function (event) {
