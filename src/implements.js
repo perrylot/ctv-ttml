@@ -194,6 +194,136 @@ common.debug.level[3] && KONtx.cc.log("PlaylistEntry config", common.dump(this.c
     //
 });
 //
+// protect the framework widevinePlaylistEntry
+(function kontx_media_widevinePlaylistEntry_singleton_protector() {
+    
+    var playlistEntry = KONtx.media.WidevinePlaylistEntry;
+    
+    if (!("__getter" in playlistEntry)) {
+        
+        delete KONtx.media.WidevinePlaylistEntry;
+        
+        KONtx.media.__defineGetter__("WidevinePlaylistEntry", function () {
+
+            return playlistEntry;
+            
+        });
+        
+        KONtx.media.__defineSetter__("WidevinePlaylistEntry", function () {
+            
+common.fire("onWarning", {
+    name: "Attempted overload",
+    message: "someone is trying to overload the KONtx.media.WidevinePlaylistEntry object from within the CC module"
+});
+            
+        });
+        
+    }
+    
+})();
+//
+KONtx.media.WidevinePlaylistEntry.implement({
+    //
+    initialize: function () {
+        
+        this.__startIndex = this.config.startIndex;
+        
+        this.__defineGetter__("startIndex", function () {
+            return this.__startIndex;
+        });
+        
+        this.__defineSetter__("startIndex", function (value) {
+            this.__startIndex = Number(value);
+        });
+        
+        this._streams = [];
+        
+common.debug.level[3] && KONtx.cc.log("WidevinePlaylistEntry config", common.dump(this.config));
+        
+        if (this.config.url) {
+            
+            this._streams.push({ url: this.config.url, bitrate: this.config.bitrate, captions: (this.config.captions || null) });
+            
+        }
+        
+        if (this.config.streams instanceof Array) {
+            
+            this.config.streams.forEach(function (stream) {
+                
+                if (stream.url) {
+                    
+                    this._streams.push({ url: stream.url, bitrate: (stream.bitrate || this.config.bitrate), captions: (stream.captions || null) });
+                    
+                } else {
+                    
+                    throw new Error("Invalid stream: must at minimum provide a URL");
+                    
+                }
+                
+            }, this);
+            
+        }
+        
+        this._isSorted = false;
+        
+        // intentionally no setter here, use helpers below
+        this.__defineGetter__("streams", this._streamsGetter);
+  
+        // above this comment should be identical to standard playlistEntry
+
+        this.url = this.config.url;
+
+        this.__defineGetter__('options', function() {
+            return this.__options;
+        });
+
+        this.__defineSetter__('options', function(value) {
+            if(!value || value instanceof KONtx.media.drm.WidevineOptions) {
+                this.__options = value;
+            } else {
+                throw new Error("Invalid options value. Must be an instance of KONtx.media.drm.WidevineOptions");
+            }
+        });
+
+        this.options = this.config.options;
+    },
+    //
+    addURL: function (url, bitrate, captions) {
+        
+        captions = captions || null;
+        
+        if (url) {
+            
+            this._isSorted = false;
+            
+            this._streams.push({ url: url, bitrate: bitrate, captions: captions });
+            
+        } else {
+            
+            throw new Error("Invalid stream: must at minimum provide a URL");
+            
+        }
+        
+        return this;
+        
+    },
+    //
+    getCaptions: function () {
+        
+        var captions = null;
+        
+        if (("captions" in this._streams[0]) && this._streams[0].captions) {
+            
+            captions = this._streams[0].captions;
+            
+        }
+        
+        return captions;
+        
+    }
+    //
+});
+//
 /*******************************************************************************
 
 *******************************************************************************/
